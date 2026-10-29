@@ -1,13 +1,30 @@
 <!doctype html>
 <html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Supervivencia por Rondas — Prototipo</title>
+<title>Supervivencia por Rondas</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#14121c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Supervivencia">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="icon" type="image/png" href="/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#14121c;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 html,body{height:100%;margin:0;background:var(--bg);overflow:hidden}
 body{display:flex;align-items:center;justify-content:center}
-canvas{image-rendering:pixelated;image-rendering:crisp-edges;touch-action:none;background:#000}
+canvas{image-rendering:pixelated;image-rendering:-moz-crisp-edges;touch-action:none;background:#000}
 </style></head><body><canvas id="c" width="400" height="225"></canvas>
+<div id="overlay" style="display:none;position:fixed;inset:0;z-index:20;
+  background:#14121c;color:#fff;font-family:'Press Start 2P',monospace;
+  padding:calc(env(safe-area-inset-top,0px) + 20px) 20px calc(env(safe-area-inset-bottom,0px) + 20px);
+  box-sizing:border-box;overflow-y:auto;align-items:flex-start;justify-content:center">
+  <div id="overlay-inner" style="max-width:520px;width:100%;margin:auto"></div>
+</div>
 <script>
 const W=400,H=225,WW=720,WH=480,cv=document.getElementById('c'),g=cv.getContext('2d');
 function fit(){const s=Math.min(innerWidth/W,innerHeight/H),k=s>=2?Math.floor(s):s;cv.style.width=W*k+'px';cv.style.height=H*k+'px'}
@@ -109,7 +126,6 @@ function drawOld(){g.save();g.fillStyle='#14121c';g.fillRect(0,0,W,H);
  for(const p of PR){g.fillStyle='#5ef';g.fillRect(Math.round(p.x-cx-2),Math.round(p.y-cy-2),4,4);g.fillStyle='#fff';g.fillRect(Math.round(p.x-cx-1),Math.round(p.y-cy-1),2,2)}
  for(const p of PT){g.fillStyle=p.c;g.fillRect(Math.round(p.x-cx),Math.round(p.y-cy),2,2)}
  g.restore();
- // HUD
  g.fillStyle='#000';g.fillRect(5,5,66,8);g.fillStyle='#e33';g.fillRect(6,6,64*clamp(P.hp/P.mhp,0,1),6);T(Math.ceil(P.hp)+'/'+P.mhp,38,12,'#fff','center',7);
  T('Ronda '+R,W/2,12,'#ffd24a','center',9);T('Enemigos '+(left+E.length)+'  Bajas '+kills,W-5,12,'#fff','right',7);
  const bx=-99,by=-99,cd=clamp(P.sk/CLS[cls].skcd,0,1);g.fillStyle='#262338';g.beginPath();g.arc(bx,by,16,0,6.283);g.fill();
@@ -156,7 +172,7 @@ CLS.barbaro.ab=[{n:'Furia',mp:20,cd:12,t:'rage',v:4},{n:'Impacto',mp:18,cd:5,t:'
 ES.archer={sp:30,hp:12,dmg:5,r:6,c:'#da5',s:mk(12,14,p=>{p(3,0,6,3,'#2a6a2a');p(3,3,6,3,skin);p(4,4,1,1,'#222');p(7,4,1,1,'#222');p(2,6,8,6,'#3a8a3a');p(3,12,2,2,'#222');p(7,12,2,2,'#222');p(10,3,1,9,'#a52')})};
 ES.boss={s:mk(30,30,p=>{p(6,4,18,10,'#7a2a8a');p(4,14,22,12,'#5a1a6a');p(0,14,5,10,'#7a2a8a');p(25,14,5,10,'#7a2a8a');p(10,8,3,3,'#ff0');p(17,8,3,3,'#ff0');p(8,11,14,2,'#222');p(9,11,2,2,'#fff');p(13,11,2,2,'#fff');p(17,11,2,2,'#fff');p(4,0,3,6,'#eee');p(23,0,3,6,'#eee');p(8,26,5,4,'#3a1040');p(17,26,5,4,'#3a1040')})};
 const BF=[['Poder','+50% dano 30s',()=>P.bp=30],['Celeridad','+40% velocidad 30s',()=>P.bs=30],['Aura de fuego','Dano alrededor 30s',()=>P.bf=30],['Curacion','Cura 40% de vida',()=>P.hp=Math.min(P.mhp,P.hp+P.mhp*.4)],['Recarga','Mana y CD al maximo',()=>{P.mp=P.mmp;P.cds.fill(0)}]];
-function start(k){cls=k;const c=CLS[k];P={x:WW/2,y:WH/2,hp:c.hp,mhp:c.hp,sp:c.sp,dmg:c.dmg,cd:c.cd,r:c.r,t:0,inv:0,sk:0,face:1,rage:0,dash:0,dx:1,dy:0,shield:0,regen:0,lv:1,xp:0,need:18,mp:100,mmp:100,cds:[0,0,0,0],bp:0,bs:0,bf:0,fa:0,ns:0,nd:0};
+function start(k){cls=k;const c=CLS[k];P={x:WW/2,y:WH/2,hp:c.hp,mhp:c.hp,sp:c.sp,dmg:c.dmg,cd:c.cd,r:c.r,t:0,inv:0,sk:0,face:1,rage:0,dash:0,dx:1,dy:0,shield:0,regen:0,lv:1,xp:0,need:18,mp:100,mmp:100,cds:[0,0,0,0],bp:0,bs:0,bf:0,fa:0,ns:0,nd:0,attacking:0};
  E=[];PR=[];PT=[];FX=[];EP=[];ZN=null;kills=0;R=0;note='';noteT=0;nextRound()}
 function nextRound(){R++;biomeCheck();const boss=R%5==0;left=Math.floor((10+R*8+R*R*1.2)*(boss?.5:1));spawnT=1;banner=2.5;S='play';EP=[];
  ZN=null;ZS=[];if(R%5==3){const n=1+(R>>3);for(let i=0;i<n;i++)ZS.push({x:70+Math.random()*(WW-140),y:70+Math.random()*(WH-140),r:32,p:0,need:7,ep:0,en:4.5,st:'n',pend:0,sp:0});note='Defiende los puntos de control!';noteT=3}
@@ -333,4 +349,383 @@ function drawBuff(){const t=(performance.now()-bt0)/1000,mx=W/2,my=H/2;if(bst=='
  g.globalAlpha=1}
 const SOL={tree:3,pine:3,rock:4,srock:4,vrock:4,dead:2,spike:3};
 function solidP(){for(const p of PRP){const s=SOL[p.k];if(!s)continue;const dx=P.x-p.x,dy=P.y+6-p.y,r=s+3;if(dx>r||dx<-r||dy>r||dy<-r)continue;const d=Math.hypot(dx,dy);if(d<r&&d>.01){P.x+=dx/d*(r-d);P.y+=dy/d*(r-d)}}}
+
+/* ============================================================
+   v6: PWA + Auth + Ranking + UI fixes
+   ============================================================ */
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(()=>{});
+}
+
+const API = '/api';
+let USER = null, TOKEN = null;
+try {
+  TOKEN = localStorage.getItem('auth_token');
+  const u = localStorage.getItem('auth_user');
+  if (TOKEN && u) USER = JSON.parse(u);
+} catch(e){}
+
+async function api(path, opts={}) {
+  const headers = { 'Content-Type': 'application/json', ...(opts.headers||{}) };
+  if (TOKEN) headers['Authorization'] = 'Bearer ' + TOKEN;
+  const r = await fetch(API + path, { ...opts, headers });
+  const data = await r.json().catch(() => ({}));
+  if (r.status === 401 && !opts.noLogout) { logout(); throw new Error('Sesión expirada'); }
+  if (!r.ok) throw new Error(data.error || ('Error ' + r.status));
+  return data;
+}
+
+if (!USER) S = 'login';
+let authMode = 'login', authUser = '', authPass = '', authErr = '';
+
+function logout() {
+  USER = null; TOKEN = null;
+  localStorage.removeItem('auth_token');
+  localStorage.removeItem('auth_user');
+  S = 'login';
+}
+
+async function doAuth() {
+  authErr = '';
+  if (authUser.length < 3) { authErr = 'Usuario: mínimo 3 caracteres'; renderOverlay(); return; }
+  if (authPass.length < 6) { authErr = 'Contraseña: mínimo 6 caracteres'; renderOverlay(); return; }
+  try {
+    const data = await api('/' + authMode, { method: 'POST', body: JSON.stringify({ username: authUser.trim(), password: authPass }) });
+    TOKEN = data.token;
+    USER = { username: data.username, best_round: data.best_round || 0 };
+    localStorage.setItem('auth_token', TOKEN);
+    localStorage.setItem('auth_user', JSON.stringify(USER));
+    S = 'menu';
+  } catch(e) {
+    authErr = e.message;
+    renderOverlay();
+  }
+}
+
+async function submitScore() {
+  if (!USER || !TOKEN) return;
+  try {
+    const r = await api('/score', { method: 'POST', body: JSON.stringify({ round: R, kills, class: cls }), noLogout: true });
+    if (r.best_round > (USER.best_round || 0)) {
+      USER.best_round = r.best_round;
+      localStorage.setItem('auth_user', JSON.stringify(USER));
+    }
+  } catch(e) {}
+}
+
+const overlay = document.getElementById('overlay');
+const overlayInner = document.getElementById('overlay-inner');
+let lbCache = [];
+
+function renderOverlay() {
+  if (S === 'login' || S === 'register') {
+    const isLogin = authMode === 'login';
+    overlayInner.innerHTML = `
+      <h1 style="text-align:center;color:#ffd24a;font-size:18px;margin:12px 0 4px">SUPERVIVENCIA</h1>
+      <p style="text-align:center;color:#999;font-size:9px;margin:0 0 24px">POR RONDAS</p>
+      <div style="display:flex;margin-bottom:16px">
+        <button data-mode="login" style="flex:1;padding:12px;background:#262338;color:${isLogin?'#fff':'#888'};border:none;border-bottom:2px solid ${isLogin?'#ffd24a':'#333'};font-family:inherit;font-size:10px;cursor:pointer">ENTRAR</button>
+        <button data-mode="register" style="flex:1;padding:12px;background:#262338;color:${!isLogin?'#fff':'#888'};border:none;border-bottom:2px solid ${!isLogin?'#ffd24a':'#333'};font-family:inherit;font-size:10px;cursor:pointer">REGISTRARSE</button>
+      </div>
+      <input id="in-user" placeholder="usuario" maxlength="20" autocomplete="username" value="${authUser.replace(/"/g,'&quot;')}"
+        style="width:100%;padding:14px;margin-bottom:10px;background:#262338;border:2px solid #444;color:#fff;font-family:inherit;font-size:12px;box-sizing:border-box;border-radius:4px">
+      <input id="in-pass" type="password" placeholder="contraseña" maxlength="30" autocomplete="current-password" value="${authPass.replace(/"/g,'&quot;')}"
+        style="width:100%;padding:14px;margin-bottom:10px;background:#262338;border:2px solid #444;color:#fff;font-family:inherit;font-size:12px;box-sizing:border-box;border-radius:4px">
+      <div style="color:#f55;font-size:9px;min-height:18px;margin-bottom:10px;line-height:1.4">${authErr||''}</div>
+      <button id="btn-auth" style="width:100%;padding:16px;background:${isLogin?'#2d4a2f':'#4a3a2d'};color:#fff;border:none;font-family:inherit;font-size:12px;font-weight:bold;cursor:pointer;border-radius:4px">${isLogin?'ENTRAR':'CREAR CUENTA'}</button>
+      <button id="btn-guest" style="width:100%;padding:12px;background:transparent;color:#666;border:none;font-family:inherit;font-size:9px;cursor:pointer;margin-top:14px">Jugar sin cuenta</button>
+    `;
+    overlayInner.querySelectorAll('button[data-mode]').forEach(b => {
+      b.onclick = () => { authMode = b.dataset.mode; authErr = ''; renderOverlay(); };
+    });
+    const iu = document.getElementById('in-user');
+    const ip = document.getElementById('in-pass');
+    iu.oninput = e => authUser = e.target.value;
+    ip.oninput = e => authPass = e.target.value;
+    ip.onkeydown = e => { if (e.key === 'Enter') doAuth(); };
+    document.getElementById('btn-auth').onclick = doAuth;
+    document.getElementById('btn-guest').onclick = () => { S = 'menu'; };
+  } else if (S === 'leaderboard') {
+    const rows = lbCache.length
+      ? lbCache.map((r, i) => {
+          const col = i === 0 ? '#ffd24a' : i === 1 ? '#ccc' : i === 2 ? '#c96' : '#ddd';
+          const safe = String(r.username).replace(/[<>&]/g, '');
+          return `<div style="display:flex;justify-content:space-between;padding:8px 12px;background:${i%2?'#1c1a24':'#262338'};margin-bottom:2px;border-radius:3px">
+            <span style="color:${col};font-size:10px">${i+1}. ${safe}</span>
+            <span style="color:${col};font-size:10px">R${r.best_round}</span>
+          </div>`;
+        }).join('')
+      : '<p style="text-align:center;color:#888;font-size:10px;padding:24px">Cargando...</p>';
+    overlayInner.innerHTML = `
+      <h2 style="text-align:center;color:#ffd24a;font-size:14px;margin:16px 0 24px">RANKING GLOBAL</h2>
+      <div>${rows}</div>
+      <button id="btn-back" style="width:100%;padding:14px;background:#262338;color:#ffd24a;border:none;font-family:inherit;font-size:11px;cursor:pointer;margin-top:20px;border-radius:4px">VOLVER</button>
+    `;
+    document.getElementById('btn-back').onclick = () => { S = 'menu'; };
+  }
+}
+
+async function loadLeaderboard() {
+  overlayInner.innerHTML = '<p style="text-align:center;color:#888;padding:40px;font-size:10px">Cargando ranking...</p>';
+  try { lbCache = await api('/leaderboard'); } catch(e) { lbCache = []; }
+  renderOverlay();
+}
+
+let _lastS = null;
+const _drawBase = draw;
+draw = function() {
+  if (S === 'login' || S === 'register' || S === 'leaderboard') {
+    g.fillStyle = '#14121c';
+    g.fillRect(0, 0, W, H);
+    if (_lastS !== S) {
+      overlay.style.display = 'flex';
+      if (S === 'leaderboard') loadLeaderboard();
+      else renderOverlay();
+      _lastS = S;
+    }
+    return;
+  }
+  if (_lastS !== S) { overlay.style.display = 'none'; _lastS = S; }
+  return _drawBase.apply(this, arguments);
+};
+
+const _hurt = hurt;
+hurt = function(d) {
+  _hurt(d);
+  if (S === 'dead') submitScore();
+};
+
+T = function(s, x, y, c, a, z) {
+  g.font = 'bold ' + (z||8) + 'px "Press Start 2P", monospace';
+  g.textAlign = a || 'left';
+  g.fillStyle = '#000';
+  g.fillText(s, Math.round(x)+1, Math.round(y)+1);
+  g.fillStyle = c || '#fff';
+  g.fillText(s, Math.round(x), Math.round(y));
+};
+
+const _menu = menu;
+menu = function() {
+  _menu.apply(this, arguments);
+  if (USER) {
+    T(USER.username, 6, 12, '#ffd24a', 'left', 7);
+    T('Mejor: R' + (USER.best_round || 0), 6, 22, '#fff', 'left', 6);
+    g.fillStyle = '#262338'; g.fillRect(W - 100, 4, 94, 14);
+    g.fillStyle = '#ffd24a'; g.fillRect(W - 100, 4, 94, 2);
+    T('RANKING', W - 53, 14, '#ffd24a', 'center', 7);
+    g.fillStyle = '#262338'; g.fillRect(W - 100, 20, 94, 12);
+    T('CERRAR SESIÓN', W - 53, 29, '#888', 'center', 6);
+  }
+};
+
+const _draw2 = draw;
+draw = function() {
+  _draw2.apply(this, arguments);
+  if (S === 'play') {
+    g.fillStyle = '#14121c';
+    g.fillRect(W/2 + 30, 0, 40, 18);
+    g.fillStyle = '#14121c';
+    g.fillRect(W - 130, H - 46, 128, 40);
+    const pxx = W - 22, pyy = 34;
+    g.fillStyle = 'rgba(0,0,0,.7)';
+    g.beginPath(); g.arc(pxx, pyy, 16, 0, 6.283); g.fill();
+    g.strokeStyle = '#ffd24a'; g.lineWidth = 2;
+    g.beginPath(); g.arc(pxx, pyy, 16, 0, 6.283); g.stroke();
+    g.lineWidth = 1;
+    g.fillStyle = '#ffd24a';
+    g.fillRect(pxx - 5, pyy - 7, 3, 14);
+    g.fillRect(pxx + 2, pyy - 7, 3, 14);
+    const bx = W - 30, by = H - 30;
+    const pos2 = [[bx - 38, by - 38], [bx, by - 38], [bx - 38, by], [bx, by]];
+    CLS[cls].ab.forEach((a, i) => {
+      const [x, y] = pos2[i];
+      const lk = P.lv < SKL[i];
+      const cd = clamp(P.cds[i] / a.cd, 0, 1);
+      g.fillStyle = lk ? '#111' : 'rgba(38,35,56,.9)';
+      g.beginPath(); g.arc(x, y, 18, 0, 6.283); g.fill();
+      if (!lk && cd > 0) {
+        g.fillStyle = 'rgba(0,0,0,.65)';
+        g.beginPath(); g.moveTo(x, y);
+        g.arc(x, y, 18, -1.57, -1.57 + 6.283 * cd); g.fill();
+      }
+      g.strokeStyle = lk ? '#555' : P.mp < a.mp ? '#38f' : CLS[cls].c;
+      g.lineWidth = 2;
+      g.beginPath(); g.arc(x, y, 18, 0, 6.283); g.stroke();
+      g.lineWidth = 1;
+      T(lk ? 'Nv' + SKL[i] : String(i + 1), x, y + 3, lk ? '#666' : '#fff', 'center', 9);
+      T(a.n.slice(0, 6), x, y + 28, lk ? '#555' : '#ccc', 'center', 5);
+    });
+  }
+  if (S === 'pause') {
+    g.fillStyle = '#262338';
+    g.fillRect(W - 100, 14, 94, 18);
+    g.fillStyle = '#ffd24a';
+    g.fillRect(W - 100, 14, 94, 2);
+    T('VOLVER AL MENÚ', W - 53, 27, '#ffd24a', 'center', 7);
+  }
+};
+
+btnTap = function(x, y) {
+  if (Math.hypot(x - (W - 22), y - 34) < 20) { togglePause(); return 1; }
+  const bx = W - 30, by = H - 30;
+  const pos2 = [[bx - 38, by - 38], [bx, by - 38], [bx - 38, by], [bx, by]];
+  for (let i = 0; i < 4; i++) {
+    if (Math.hypot(x - pos2[i][0], y - pos2[i][1]) < 20) { cast(i); return 1; }
+  }
+  return 0;
+};
+
+document.addEventListener('pointerdown', e => {
+  if (S === 'menu' && USER) {
+    const [x, y] = pos(e);
+    if (x >= W-100 && x <= W-6 && y >= 4 && y <= 18) { S = 'leaderboard'; e.stopPropagation(); e.preventDefault(); return; }
+    if (x >= W-100 && x <= W-6 && y >= 20 && y <= 32) { logout(); e.stopPropagation(); e.preventDefault(); return; }
+  }
+  if (S === 'pause') {
+    const [x, y] = pos(e);
+    if (x >= W-100 && x <= W-6 && y >= 14 && y <= 32) {
+      S = 'menu'; J = null; e.stopPropagation(); e.preventDefault();
+    }
+  }
+}, { capture: true });
+
+addEventListener('keydown', e => {
+  if ((S === 'login' || S === 'register') && e.key === 'Enter') doAuth();
+  if (S === 'leaderboard' && (e.key === 'Escape' || e.key === 'Enter')) S = 'menu';
+}, { capture: true });
+
+/* ============================================================
+   v7: Animaciones procedurales (sprites temporales)
+   ============================================================ */
+function mkFrame(w, h, drawFn) {
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  const x = c.getContext('2d');
+  x.imageSmoothingEnabled = false;
+  drawFn((a, b, cw, ch, col) => { x.fillStyle = col; x.fillRect(a, b, cw, ch); });
+  const d = x.getImageData(0, 0, w, h), o = x.createImageData(w, h);
+  const A = (i, j) => i >= 0 && j >= 0 && i < w && j < h ? d.data[(j*w+i)*4+3] : 0;
+  for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
+    const k = (j*w+i)*4;
+    if (A(i, j)) o.data.set(d.data.subarray(k, k+4), k);
+    else if (A(i-1,j)||A(i+1,j)||A(i,j-1)||A(i,j+1)) o.data.set([20,16,28,255], k);
+  }
+  x.putImageData(o, 0, 0);
+  return c;
+}
+
+const CFG = {
+  guerrero:  { body: '#4a6fa5', leg: '#3a3a4a', hair: '#aab',    deco: 'helmet' },
+  hechicero: { body: '#6a3fa0', leg: '#6a3fa0', hair: '#4b2a7a', deco: 'hat' },
+  asesino:   { body: '#2b2b38', leg: '#222',    hair: '#1c1c26', deco: 'hood' },
+  barbaro:   { body: '#f1c27d', leg: '#7a4a1e', hair: '#a0521d', deco: 'hair' }
+};
+
+function decorate(p, deco, dir) {
+  const isUp = dir === 'up';
+  const isSide = dir === 'side';
+  if (deco === 'helmet') {
+    p(4, 1, 6, 2, '#aab');
+    if (!isUp) p(6, 0, 2, 1, '#d33');
+    if (!isUp) {
+      p(11, 3, 1, 7, '#dde');
+      if (!isSide) p(10, 10, 3, 1, '#8a5a2b');
+    }
+  } else if (deco === 'hat') {
+    p(3, 1, 8, 2, '#4b2a7a');
+    p(5, 0, 4, 1, '#4b2a7a');
+    if (!isUp) { p(10, 2, 3, 2, '#5ef'); p(11, 3, 1, 10, '#7a4a1e'); }
+  } else if (deco === 'hood') {
+    p(4, 1, 6, 3, '#1c1c26');
+    if (!isUp) { p(4, 4, 6, 1, '#1c1c26'); p(4, 10, 6, 1, '#a33'); p(11, 8, 1, 3, '#cde'); }
+  } else if (deco === 'hair') {
+    p(3, 1, 8, 3, '#a0521d');
+    if (!isUp) {
+      p(4, 6, 6, 2, '#a0521d');
+      p(4, 10, 6, 1, '#5a3a1a');
+      p(11, 5, 1, 7, '#7a4a1e');
+      if (!isSide) p(10, 3, 3, 3, '#bcc');
+    }
+  }
+}
+
+function drawChar(p, cfg, dir, frame) {
+  const legs = [[3,3],[2,3],[3,2]][frame] || [3,3];
+  const bob = frame === 1 ? -1 : 0;
+  const isUp = dir === 'up';
+  const isSide = dir === 'side';
+  if (isSide) {
+    p(4, 12, 2, legs[0], cfg.leg);
+    p(7, 12, 2, legs[1], cfg.leg);
+    p(4, 7+bob, 6, 5, cfg.body);
+    p(9, 7+bob, 1, 4, '#f1c27d');
+    p(4, 2+bob, 6, 5, '#f1c27d');
+    p(8, 4+bob, 1, 1, '#222');
+    p(10, 4+bob, 1, 1, '#f1c27d');
+    decorate(p, cfg.deco, dir);
+  } else {
+    p(4, 12, 2, legs[0], cfg.leg);
+    p(8, 12, 2, legs[1], cfg.leg);
+    p(4, 7+bob, 6, 5, cfg.body);
+    if (!isUp) { p(3, 7+bob, 1, 4, '#f1c27d'); p(10, 7+bob, 1, 4, '#f1c27d'); }
+    else { p(3, 7+bob, 1, 4, cfg.body); p(10, 7+bob, 1, 4, cfg.body); }
+    p(4, 2+bob, 6, 5, isUp ? cfg.hair : '#f1c27d');
+    if (!isUp) { p(5, 4+bob, 1, 1, '#222'); p(8, 4+bob, 1, 1, '#222'); }
+    decorate(p, cfg.deco, dir);
+  }
+}
+
+const ANIM = {};
+for (const k of ORDER) {
+  const cfg = CFG[k];
+  ANIM[k] = {
+    down: [0,1,2].map(f => mkFrame(14, 16, p => drawChar(p, cfg, 'down', f))),
+    up:   [0,1,2].map(f => mkFrame(14, 16, p => drawChar(p, cfg, 'up', f))),
+    side: [0,1,2].map(f => mkFrame(14, 16, p => drawChar(p, cfg, 'side', f)))
+  };
+}
+
+let animT = 0;
+let P_dir = 'down';
+
+const _upd = upd;
+upd = function(dt) {
+  animT += dt;
+  if (P && P.attacking > 0) P.attacking -= dt;
+  return _upd.apply(this, arguments);
+};
+
+const _attack = attack;
+attack = function() {
+  const r = _attack.apply(this, arguments);
+  if (r) P.attacking = 0.2;
+  return r;
+};
+
+drawP = function() {
+  if (P.inv > 0 && ((time * 20) | 0) % 2) return;
+  shadow(P.x, P.y, 10);
+  const moving = Math.hypot(P.dx || 0, P.dy || 0) > 0.1;
+  if (moving) {
+    if (Math.abs(P.dx || 0) > Math.abs(P.dy || 0)) {
+      P_dir = (P.dx || 0) < 0 ? 'left' : 'right';
+    } else {
+      P_dir = (P.dy || 0) < 0 ? 'up' : 'down';
+    }
+  }
+  const anim = ANIM[cls] || ANIM.guerrero;
+  let frames, flip = false;
+  if (P_dir === 'up') frames = anim.up;
+  else if (P_dir === 'left') { frames = anim.side; flip = true; }
+  else if (P_dir === 'right') frames = anim.side;
+  else frames = anim.down;
+  let fi = 0;
+  if (moving) fi = 1 + (Math.floor(animT * 8) % 2);
+  const frame = frames[fi] || frames[0];
+  spr(frame, P.x, P.y, flip);
+  if (P.shield > 0 || P.rage > 0) {
+    g.strokeStyle = P.shield > 0 ? '#7cf' : '#f64';
+    g.beginPath(); g.arc(P.x - cx, P.y - cy, 12, 0, 6.283); g.stroke();
+  }
+};
 </script></body></html>
