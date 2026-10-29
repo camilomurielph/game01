@@ -1,0 +1,19 @@
+services:
+  web:
+    build: .
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  api:
+    build: ./backend
+    volumes:
+      - api-data:/data
+    environment:
+      - JWT_SECRET=${JWT_SECRET:-please-change-this-secret}
+    restart: unless-stopped
+
+volumes:
+  api-data:
