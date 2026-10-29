@@ -1,14 +1,16 @@
 services:
   web:
     build: .
-    ports:
-      - "80:80"
+    expose:
+      - "80"
     depends_on:
       - api
     restart: unless-stopped
 
   api:
     build: ./backend
+    expose:
+      - "3000"
     volumes:
       - api-data:/data
     environment:
