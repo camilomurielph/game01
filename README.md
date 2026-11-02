@@ -1,19 +1,32 @@
 # Supervivencia por Rondas
 
-RPG rápido de supervivencia por rondas con pixel art. 4 clases, jefes, puntos de control y biomas.
-Todo el juego es un único archivo estático: `index.html` (sin dependencias, sin build).
+RPG de supervivencia por rondas en pixel art. Juego web (canvas) + servidor Node sin dependencias
+para cuentas y ranking. Instalable como PWA.
 
 ## Controles
-- Mover: WASD / flechas, o arrastrar en pantalla táctil
-- Habilidades: teclas 1-4 o los botones en pantalla
-- Pausa: P o Esc  |  Silencio: M
+- Mover: WASD / flechas, o arrastrar en pantalla tactil
+- Poderes: **U I O P** (o los botones en pantalla)
+- Pausa: **Esc** (o el boton II)  |  Silencio: M
+- El personaje ataca solo, tambien mientras se mueve (reglas de animacion en `public/sprites/LEEME.md`)
+
+## Estructura
+- `public/` juego estatico (index.html, manifest, service worker, iconos, sprites)
+- `server.js` sirve `public/` y la API (`/api/register`, `/api/login`, `/api/me`, `/api/score`, `/api/leaderboard`)
+- `Dockerfile` imagen node:22-alpine
 
 ## Probar en local
-Abre `index.html` en el navegador, o:
-    python3 -m http.server 8080
+    PORT=3000 DATA_DIR=./data node server.js     # abre http://localhost:3000
 
-## Desplegar en Coolify (VPS)
-1. Sube esta carpeta a un repositorio de GitHub.
-2. En Coolify: New Resource > Public/Private Repository > elige el repo y la rama.
-3. Build Pack: **Dockerfile** (Port: 80). Alternativa: **Static** con directorio base `/`.
-4. Asigna tu dominio y pulsa Deploy.
+## Despliegue en Coolify
+1. Sube el repo a GitHub y crealo en Coolify (New Resource > Repository).
+2. Build Pack: **Dockerfile**. Ports Exposes: **3000**.
+3. **Persistent Storage**: agrega un volumen montado en `/data` (si no, el ranking se borra en cada deploy).
+4. Asigna el dominio (Coolify emite HTTPS; el service worker y la PWA lo requieren) y despliega.
+
+## Instalar como app
+- iPhone: Safari > Compartir > Anadir a pantalla de inicio.
+- Android: Chrome > menu > Instalar app.
+
+## Notas
+- Las contrasenas se guardan con scrypt + sal; las sesiones usan tokens aleatorios (se guarda su hash).
+- Los puntajes los envia el cliente, asi que un jugador tecnico podria falsificarlos.
